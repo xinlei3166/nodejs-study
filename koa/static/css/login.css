@@ -1,0 +1,11 @@
+.main {
+    background: #fff;
+}
+
+.login-wrap {
+    height: 300px;
+}
+
+.layui-tab-content {
+    padding: 20px 0;
+}

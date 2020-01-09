@@ -1,0 +1,126 @@
+{% extends 'base.njk' %}
+
+{% block headcss %}
+    <link rel="stylesheet" href="../static/css/product.css">
+{% endblock %}
+
+{% block maincon %}
+    <div class="product">
+        <div class="left">
+            <h3>Products</h3>
+            <div class="table-wrap">
+                <table class="table">
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Manufacturer</th>
+                    </tr>
+                    <tr v-for="product in products">
+                        <td v-text="product.name"></td>
+                        <td v-text="product.price"></td>
+                        <td v-text="product.manufacturer"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="right">
+            <form class="layui-form" id="form">
+                <div class="layui-form-item">
+                    <label class="layui-form-label">商品名称</label>
+                    <div class="layui-input-block">
+                        <input type="text" name="name" required  lay-verify="required" placeholder="" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">制造商</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="manufacturer" required lay-verify="required" placeholder="" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">价格</label>
+                    <div class="layui-input-inline">
+                        <input type="text" name="price" required lay-verify="required" placeholder="" autocomplete="off" class="layui-input">
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="form">新增</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block bottomjs %}
+    <script>
+        var vm = new Vue({
+            el: '.product',
+            data: {
+                products: []
+            },
+            methods: {
+                deleteProduct: function (id) {
+                    var that = this;
+                    $.ajax(
+                        {
+                            type: "delete",
+                            dataType: 'json',
+                            url: '/api/products/' + id,
+                            data: {},
+                            success: function (data) {
+                                var i;
+                                for (i = 0; i < that.products.length; i++) {
+                                    if (that.products[i].id === data.id) {
+                                        that.products.splice(i, 1);
+                                        return;
+                                    }
+                                }
+                            },
+                            error: function (err) {
+                                alert(err);
+                            }
+                        }
+                    )
+                }
+            }
+        });
+
+        $.ajax(
+            {
+                type: "get",
+                url: '/api/products',
+                success: function (data) {
+                    vm.products = data.products
+                },
+                error: function (err) {
+                    alert(err);
+                }
+            }
+        )
+
+        layui.use('form', function(){
+            var form = layui.form;
+
+            //监听提交
+            form.on('submit(form)', function(data){
+                $.ajax(
+                    {
+                        type: "post",
+                        url: '/api/products',
+                        contentType: 'application/json',
+                        data: JSON.stringify(data.field),
+                        success: function (data) {
+                            vm.products.push(data)
+                        },
+                        error: function (err) {
+                            alert(err);
+                        }
+                    }
+                )
+                return false
+            });
+        });
+    </script>
+{% endblock %}

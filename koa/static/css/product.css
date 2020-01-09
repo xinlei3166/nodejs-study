@@ -1,0 +1,35 @@
+.product {
+    display: flex;
+    justify-content: center;
+}
+
+.left {
+    flex: 2;
+    height: 310px;
+    border: 1px solid gray;
+    padding: 16px;
+    overflow: scroll;
+}
+
+.left h3 {
+    border: 1px solid gray;
+    border-bottom: none;
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+th {
+    width: calc(100% / 3);
+}
+
+th, td {
+    height: 30px;
+}
+
+.right {
+    flex: 1;
+    border: 1px solid gray;
+    padding: 16px;
+    margin-left: 20px;
+}

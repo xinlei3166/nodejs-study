@@ -1,0 +1,90 @@
+th, td {
+    padding: 0;
+    text-align: center;
+}
+
+table, td, th {
+    border:1px solid gray;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    height: 100%;
+    overflow-y: scroll;
+}
+
+html {
+    background-color: #F2F2F2;
+    margin-top: 61px;
+}
+
+a:link {
+    color: #dddddd;
+}
+
+a:hover {
+    color: #009688;
+}
+
+.header {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 60px;
+    font-size: 16px;
+    z-index: 9999;
+}
+
+.header a {
+    color: #dddddd;
+    margin-left: 20px;
+    line-height: 60px;
+}
+
+.header a:hover {
+    color: #009688;
+}
+
+.header nav {
+    position: relative;
+}
+
+.login {
+    display: inline-block;
+    position: absolute;
+    right: 0;
+}
+
+.main {
+    padding: 20px;
+    margin-top: 15px;
+}
+
+.title {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#lunbo {
+    text-align: center;
+    line-height: 280px;
+}
+
+#lunbo div {
+    background: #009688;
+}
+
+.footer {
+    margin: 50px 0 0;
+    padding: 20px 0 30px;
+    border-top: 1px solid #e2e2e2;
+    text-align: center;
+    color: #737573;
+    line-height: 30px;
+}
+
+.footer a {
+    padding: 0 6px;
+}

@@ -1,0 +1,46 @@
+{
+  "name": "learning",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node koa/app.js",
+    "pro": "cross-env NODE_ENV=production node koa/app.js",
+    "test": "mocha koa/test/"
+  },
+  "author": "xinlei",
+  "license": "ISC",
+  "dependencies": {
+    "cookies": "^0.7.3",
+    "express": "^4.17.1",
+    "koa": "^2.7.0",
+    "koa-bodyparser": "^4.2.1",
+    "koa-compose": "^4.1.0",
+    "koa-convert": "^1.2.0",
+    "koa-helmet": "^4.2.0",
+    "koa-jwt": "^3.5.1",
+    "koa-logger": "^3.2.0",
+    "koa-router": "^7.4.0",
+    "koa-session": "^5.12.0",
+    "koa-static": "^5.0.0",
+    "koa-views": "^6.2.0",
+    "koa-websocket": "^5.0.1",
+    "mime": "^2.4.4",
+    "mysql": "^2.17.1",
+    "mysql2": "^1.6.5",
+    "mz": "^2.7.0",
+    "node-uuid": "^1.4.8",
+    "nunjucks": "^3.2.0",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5",
+    "sequelize": "^5.8.12",
+    "sqlite3": "^4.0.9",
+    "ws": "^7.0.1"
+  },
+  "devDependencies": {
+    "cross-env": "^5.2.0",
+    "mocha": "^6.1.4",
+    "sequelize-cli": "^5.5.0",
+    "supertest": "^4.0.2"
+  }
+}
