@@ -3,8 +3,8 @@ const errorCode = require('../exception/error-code')
 
 module.exports = function(router) {
   router.get('/api/users/me', async ctx => {
-    const user = await ctx.db.findOne(collections.User, {
-      uidNumber: ctx.request.sub
+    const user = await ctx.db.findOne(collections.user, {
+      uidNumber: ctx.state.user.sub
     })
     const data = {
       email: user.email,

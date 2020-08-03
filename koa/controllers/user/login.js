@@ -1,11 +1,11 @@
-const emailPattern = require('../utils/patterns').emailPattern
+const { emailPattern } = require('../utils/patterns')
 const token = require('../utils/token')
+const { SECRET_KEY: key } = require('../settings')
 const login = require('../utils/ldap-client')
-const collections = require('../constant').collections
+const { collections } = require('../constant')
 const errorCode = require('../exception/error-code')
-const settings = require('../settings')
-const hashidEncode = require('../utils/utils').hashidEncode
-const hashidDecode = require('../utils/utils').hashidDecode
+const { hashidEncode } = require('../utils/utils')
+const { validToken } = require('../utils/decorator')
 
 async function createUser(ctx, user) {
   const obj = {
@@ -17,7 +17,28 @@ async function createUser(ctx, user) {
     title: user.title,
     avatar: ''
   }
-  return await ctx.db.insertOne(collections.User, obj)
+  return await ctx.db.insertOne(collections.user, obj)
+}
+
+function setAccessTokenCookie(ctx, accessToken) {
+  ctx.cookies.set('accessToken', accessToken, {
+    httpOnly: false,
+    overwrite: false,
+    sign: true,
+    // domain: host,
+    // path: '/index',
+    maxAge: token.accessExpiresIn * 1000
+    // expires: new Date('2021-02-06'),
+  })
+}
+
+function setRefreshTokenCookie(ctx, refreshToken) {
+  ctx.cookies.set('refreshToken', refreshToken, {
+    httpOnly: true,
+    overwrite: false,
+    sign: true,
+    maxAge: token.refreshExpiresIn * 1000
+  })
 }
 
 module.exports = function(router) {
@@ -39,7 +60,7 @@ module.exports = function(router) {
 
     try {
       const userInfo = await login(user, password)
-      const _user = await ctx.db.findOne(collections.User, {
+      const _user = await ctx.db.findOne(collections.user, {
         uidNumber: userInfo.uidNumber
       })
       if (!_user) {
@@ -52,20 +73,8 @@ module.exports = function(router) {
         sub: hashidEncode(userInfo.uidNumber)
       })
       // const host = ctx.request.host
-      ctx.cookies.set('accessToken', accessToken, {
-        httpOnly: false,
-        overwrite: false,
-        // domain: host,
-        // path: '/index',
-        maxAge: token.accessExpiresIn * 1000
-        // expires: new Date('2021-02-06'),
-      })
-      ctx.cookies.set('refreshToken', refreshToken, {
-        httpOnly: false,
-        overwrite: false,
-        maxAge: token.refreshExpiresIn * 1000
-      })
-      // ctx.set('authorization', 'Bearer ' + accessToken)
+      setAccessTokenCookie(ctx, accessToken)
+      setRefreshTokenCookie(ctx, refreshToken)
       return ctx.success('登录成功')
     } catch (e) {
       let { code, msg } = e
@@ -83,45 +92,43 @@ module.exports = function(router) {
 
   // 刷新token
   router.post('/api/refreshtoken', async ctx => {
-    const refreshToken = ctx.request.body.refreshToken
+    const refreshToken = ctx.cookies.get('refreshToken')
     if (!refreshToken) {
       return ctx.error(
         errorCode.InvalidParams.code,
         errorCode.InvalidParams.msg
       )
     }
-    const revokeRefreshToken = await ctx.db.findOne(collections.RevokeToken, {
-      key: 'refreshToken_' + refreshToken
-    })
-    if (revokeRefreshToken) {
-      return ctx.error(errorCode.TokenRevoke.code, errorCode.TokenRevoke.msg)
-    }
-
-    try {
-      const payload = token.decode(settings.SECRET_KEY, refreshToken)
-      const sub = hashidDecode(payload.sub)
-      const user = await ctx.db.findOne(collections.User, {
-        uidNumber: String(sub)
-      })
-      if (!user) {
-        return ctx.error(errorCode.InvalidTokenError.code, '不合法的token sub')
-      } else {
-        ctx.cookies.set('accessToken', token.refreshAccessToken(refreshToken), {
-          httpOnly: false,
-          overwrite: false,
-          maxAge: token.accessExpiresIn * 1000
-        })
-        return ctx.success(errorCode.Success.msg)
-      }
-    } catch (e) {
-      const { code, msg } = e
-      return ctx.error(code, msg)
+    const valid = await validToken(ctx, refreshToken, 'refreshToken')
+    if (valid) {
+      setAccessTokenCookie(ctx, token.refreshAccessToken(refreshToken))
+      return ctx.success(errorCode.Success.msg)
     }
   })
 
   // 注销
   router.post('/api/logout', async ctx => {
-    ctx.success(errorCode.Success.msg)
+    const exp = ctx.state.user.exp
+    let accessToken = ctx.state.user.token
+    const refreshToken = ctx.cookies.get('refreshToken')
+    const payload = token.decode(key, refreshToken, false)
+    const res = ctx.db.insertMany('token', [
+      {
+        exp: new Date(exp * 1000),
+        type: 'accessToken',
+        token: accessToken
+      },
+      {
+        exp: new Date(payload.exp * 1000),
+        type: 'refreshToken',
+        token: refreshToken
+      }
+    ])
+    if (res) {
+      ctx.success('退出登录成功')
+    } else {
+      ctx.error(errorCode.LogoutFail.code, errorCode.LogoutFail.msg)
+    }
   })
 
   return router

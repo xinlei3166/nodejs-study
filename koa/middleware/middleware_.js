@@ -1,5 +1,6 @@
 const compose = require('koa-compose')
 const dayjs = require('dayjs')
+const errorCode = require('../exception/error-code')
 
 // logger
 const _logger = require('koa-logger')
@@ -24,60 +25,7 @@ const _router = require('../controllers') // 注意require('koa-router')返回�
 const router = _router.routes()
 
 // check token
-const errorCode = require('../exception/error-code')
-const unless = require('../constant').unless
-const token = require('../utils/token')
-const hashidDecode = require('../utils/utils').hashidDecode
-const collections = require('../constant').collections
-const settings = require('../settings')
-
-const checkToken = async (ctx, next) => {
-  if (!unless.includes(ctx.url)) {
-    let accessToken = ctx.request.headers.authorization
-    if (!accessToken) {
-      return ctx.error(errorCode.MissingToken.code, errorCode.MissingToken.msg)
-    }
-
-    if (!accessToken.startsWith('Bearer ')) {
-      return ctx.error(
-        errorCode.TokenFormatError.code,
-        errorCode.TokenFormatError.msg
-      )
-    }
-
-    accessToken = accessToken.split(' ')[1]
-
-    const revokeAccessToken = await ctx.db.findOne(collections.RevokeToken, {
-      key: 'accessToken_' + accessToken
-    })
-    if (revokeAccessToken) {
-      return ctx.error(errorCode.TokenRevoke.code, errorCode.TokenRevoke.msg)
-    }
-
-    try {
-      const payload = token.decode(settings.SECRET_KEY, accessToken)
-
-      const tokenType = payload.tokenType
-      if (tokenType !== 'accessToken') {
-        return ctx.error(errorCode.InvalidTokenError.code, '不合法的token type')
-      }
-
-      const sub = hashidDecode(payload.sub)
-      const user = await ctx.db.findOne(collections.User, {
-        uidNumber: String(sub)
-      })
-      if (!user) {
-        return ctx.error(errorCode.InvalidTokenError.code, '不合法的token sub')
-      } else {
-        ctx.request.sub = String(sub)
-      }
-    } catch (e) {
-      const { code, msg } = e
-      return ctx.error(code, msg)
-    }
-  }
-  await next()
-}
+const { checkToken } = require('../utils/decorator')
 
 // return response
 const response = async (ctx, next) => {
@@ -103,10 +51,12 @@ const response = async (ctx, next) => {
 
 // error request method
 const errorRequestMethod = async (ctx, next) => {
-  next().catch(err => {
+  return next().catch(err => {
     console.error(dayjs().format('YYYY-MM-DD HH:mm:ss'), err)
     if (err.output.statusCode === 405) {
       ctx.error(errorCode.MethodNotAllowed.code, errorCode.MethodNotAllowed.msg)
+    } else {
+      throw err
     }
   })
 }
@@ -116,7 +66,7 @@ module.exports = compose([
   responseTime,
   bodyParser,
   response,
+  errorRequestMethod,
   checkToken,
-  router,
-  errorRequestMethod
+  router
 ])
