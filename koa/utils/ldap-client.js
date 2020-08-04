@@ -88,7 +88,7 @@ async function login(email, password) {
   return user
 }
 
-// login('xxxxxx@rouchi.com', 'xxxxxx')
+// login('xxxxxx@xxxxxx.com', 'xxxxxx')
 //   .then(user => {
 //     console.log('user', user)
 //   })
